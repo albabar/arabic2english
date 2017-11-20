@@ -2,6 +2,13 @@
 require_relative './irregular'
 
 class Engine
+  CONFIG = {
+    billion: 1_000_000_000..(100_000_000_000 - 1),
+    million: 1_000_000..(1_000_000_000 - 1),
+    thousand: 1_000..(1_000_000 - 1),
+    hundred: 100..(1000 - 1)
+  }.freeze
+
   def self.translate(number)
     new(number).translate
   end
@@ -20,18 +27,14 @@ class Engine
   def convert(number)
     irr = Irregular::NUMBERS[number]
     return [irr] if irr
+    return under_100(number) if number < 100
 
-    if number < 100_000_000_000 && number >= 1_000_000_000
-      above_100(number, 1_000_000_000, 'billion')
-    elsif number < 1_000_000_000 && number >= 1_000_000
-      above_100(number, 1_000_000, 'million')
-    elsif number < 1_000_000 && number >= 1000
-      above_100(number, 1000, 'thousand')
-    elsif number < 1000 && number >= 100
-      above_100(number, 100, 'hundred')
-    else
-      under_100(number)
-    end
+    english, range = supported_by_config(number) || []
+    above_100(number, range.first, english) if english
+  end
+
+  def supported_by_config(number)
+    CONFIG.find { |_key, value| value.include?(number) }
   end
 
   def under_100(number)
@@ -49,6 +52,6 @@ class Engine
   end
 
   def pluralize(str, number)
-    str + (number > 1 ? 's' : '')
+    str.to_s + (number > 1 ? 's' : '')
   end
 end
